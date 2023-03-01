@@ -1,0 +1,21 @@
+.filterItem {
+    height: 100px;
+    width: 100px;
+    cursor: pointer;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    margin: 10px;
+}
+
+.checked {
+    border: 2px solid rgb(20, 149, 224);
+    opacity: 0.2;
+}
+
+.selected-icon {
+    color: rgb(20, 149, 224);
+    position: absolute;
+    top: 50%; 
+    left: 50%;
+    transform: translate(-50%, -50%); 
+}

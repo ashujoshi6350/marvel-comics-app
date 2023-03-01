@@ -1,0 +1,45 @@
+.filter {
+}
+
+.filter-items-wrapper {
+  background-color: rgb(52, 47, 47);
+  display: flex;
+}
+
+.icon-btn {
+  width: 20%;
+  display: flex;
+  align-items: center;
+  z-index: 1;
+  background-color: rgb(52, 47, 47);
+}
+
+.left {
+  justify-content: flex-end;
+}
+
+.right {
+  justify-content: flex-start;
+}
+
+.arrow-icon {
+  color: white;
+  cursor: pointer;
+}
+
+.filter-details-wrapper {
+  background-color: rgb(74, 69, 69);
+}
+
+.filter-details {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px;
+  width: 60%;
+  margin: 0 auto;
+  background-color: rgb(74, 69, 69);
+}
+
+.filter-names {
+  color: white;
+}
