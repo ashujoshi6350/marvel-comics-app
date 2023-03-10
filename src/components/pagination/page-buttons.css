@@ -1,0 +1,15 @@
+.page-btn {
+  padding: 4px 8px;
+  background-color: white;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.dots {
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+}

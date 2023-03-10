@@ -7,7 +7,7 @@ export const FilterItem = ({handleItemClick, data}) => {
   return (
     <div style={{position: 'relative'}} onClick={() => handleItemClick(data)}>
       <img src={data.image} className={`filterItem ${data.isSelected ? 'checked' : ''}`} alt='pic'/>
-      {data.isSelected ? <DoneIcon className='selected-icon'/> : null}
+      {data.isSelected ? <DoneIcon className='selected-icon' style={{fontSize: '56px'}}/> : null}
     </div>
   )
 }

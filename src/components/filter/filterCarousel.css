@@ -6,6 +6,13 @@
   display: flex;
 }
 
+.item-wrapper {
+  display: flex;
+  width: 60%;
+  transform: translateX(0);
+  transition: all 0.1s linear;
+}
+
 .icon-btn {
   width: 20%;
   display: flex;
@@ -42,4 +49,29 @@
 
 .filter-names {
   color: white;
+  padding-right: 4px;
+}
+
+.reset-btn {
+  min-width: fit-content;
+  background-color: white;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 8px;
+  height: fit-content;
+}
+
+@media screen and (max-width: 850px) {
+  .icon-btn {
+    display: none;
+  }
+  
+  .item-wrapper {
+    width: 100%;
+    overflow: auto;
+  }
+
+  .filter-details {
+    width: 100%;
+  }
 }

@@ -5,28 +5,43 @@ import MD5 from "crypto-js/md5";
 import axios from 'axios';
 import { FilterCarousel } from './components/filter/FilterCarousel';
 import { formatData } from './helper/helper';
+import { PageButtons } from './components/pagination/PageButtons';
 
 function App() {
   const [filterData, setFilterData] = useState([]);
   const [filterArr, setFilterArr] = useState([]);
   const [cardsData, setCardsData] = useState([]);
   const [text, setText] = useState('');
+  const [totalPages, setTotalPages] = useState(1);
+  const [offset, setOffset] = useState(0);
+  const [isCardsLoading, setIsCardsLoading] = useState(false);
+  const [isFiltersLoading, setIsFiltersLoading] = useState(false);
 
   const id = useRef(null);
-
+  const isFirstLoad = useRef(true);
+  const isSearchLoad = useRef(false);
+  
+  const limit = 20;
   const PUBLIC_KEY = process.env.REACT_APP_PUBLIC_KEY;
   const PRIVATE_KEY = process.env.REACT_APP_PRIVATE_KEY;
   const DEBOUNCE_DELAY = 500;
   const GET_COMICS_BASE_URL = 'https://gateway.marvel.com:443/v1/public/comics';
 
-  const getUrl = (qp={}) => {
+  const getUrl = () => {
     const ts = Date.now();
     const key = ts + PRIVATE_KEY + PUBLIC_KEY;
     const hash = MD5(key);
     let url = `${GET_COMICS_BASE_URL}?ts=${ts}&apikey=${PUBLIC_KEY}&hash=${hash}`;
-    Object.keys(qp).map(key => {
-      if (qp[key]) {
-        url = url + `&${key}=${qp[key]}`
+    let filterQuery = formatData(filterArr, 'id', ',');
+    let queryParams = {
+      characters: filterQuery,
+      titleStartsWith: text,
+      limit,
+      offset
+    };
+    Object.keys(queryParams).map(key => {
+      if (queryParams[key] === 0 || queryParams[key]) {
+        url = url + `&${key}=${queryParams[key]}`
       }
       return true
     });
@@ -34,21 +49,31 @@ function App() {
     return url
   }
 
-  const handleSearch = (value) => {
-    setText(value);
-    if (id.current) {
-      clearTimeout(id.current);
-    }
-    id.current = setTimeout(async () => {
-      let filterQuery = formatData(filterArr, 'id', ',');
-      let optionalQueryParams = {
-        characters: filterQuery,
-        titleStartsWith: value
+  useEffect(() => {
+    if (isFirstLoad.current) {
+      fetchCardAndFilterData();
+      isFirstLoad.current = false;
+    } else if (isSearchLoad.current) {
+      if (id.current) {
+        clearTimeout(id.current);
       }
-      const url = getUrl(optionalQueryParams);
-      const result = await axios.get(url);
-      setCardsData(result.data.data.results);
-    }, DEBOUNCE_DELAY)
+      id.current = setTimeout(() => {
+        fetchCardData();
+        isSearchLoad.current = false;
+      }, DEBOUNCE_DELAY)
+    } else {
+      fetchCardData();
+    }
+  }, [offset, filterArr, text]);
+
+  const handleOffsetChange = (newOffset) => {
+    setOffset(newOffset);
+  }
+
+  const handleSearch = (value) => {
+    isSearchLoad.current = true;
+    setText(value);
+    setOffset(0);
   }
 
   const handleItemClick = async (item) => {
@@ -69,20 +94,16 @@ function App() {
       return val
     });
     setFilterData(data);
-    let filterQuery = formatData(arr, 'id', ',');
-    let optionalQueryParams = {
-      characters: filterQuery,
-      titleStartsWith: text
-    }
-    const url = getUrl(optionalQueryParams);
-    const result = await axios.get(url);
-    setCardsData(result.data.data.results);
+    setOffset(0);
   }
 
-  const getData = async () => {
-    const url = getUrl();
-    const result = await axios.get(url);
+  const fetchCardAndFilterData = async() => {
+    setIsCardsLoading(true);
+    let result = await getData();
     setCardsData(result.data.data.results);
+    setTotalPages(Math.ceil(result.data.data.total / limit));
+    setIsCardsLoading(false);
+    setIsFiltersLoading(true);
     let mymap = new Map();  
     let uniqueHeroes = [];
     result.data.data.results.map(item => item.characters.items.map(charac => {
@@ -114,17 +135,34 @@ function App() {
         return true
       })
       setFilterData(tempFilterData);
+      setIsFiltersLoading(false);
     });
   }
 
-  useEffect(() => {
-    getData();
-  }, []);
+  const fetchCardData = async () => {
+    setIsCardsLoading(true);
+    let result = await getData();
+    setCardsData(result.data.data.results);
+    setTotalPages(Math.ceil(result.data.data.total / limit));
+    setIsCardsLoading(false);
+  }
+
+  const getData = () => {
+    const url = getUrl();
+    return axios.get(url);
+  }
 
   const resetFilters = () => {
+    let data = filterData.map(val => {
+      if (val.isSelected) {
+        return {...val, isSelected: false}
+      }
+      return val
+    });
+    setFilterData(data);
     setFilterArr([]);
     setText('');
-    getData();
+    setOffset(0);
   }
 
   return (
@@ -140,20 +178,36 @@ function App() {
           ></input>
         </span>
       </header>
-      {filterData.length > 0 && <FilterCarousel
+      {isFiltersLoading ? <div className="filter-loader">
+        <div className="shimmer"></div>
+      </div> : filterData.length ? <FilterCarousel
         filterData={filterData}
         handleItemClick={handleItemClick}
         filterArr={filterArr}
         resetFilters={resetFilters}
-      /> }
+      /> : null}
       <div className='cards-wrapper'>
-        <div className='cards'>
-          {
-            cardsData.map(item => {
-              return <Card className='card' key={item.id} data={item}/>
-            })
-          }
-        </div>
+        {isCardsLoading ? <div className='info'>
+          Loading data...
+        </div> : cardsData.length ? <>
+          <div className='cards'>
+            {
+              cardsData.map(item => {
+                return <Card className='card' key={item.id} data={item}/>
+              })
+            }
+          </div>
+          <div className='page-btns-wrapper'>
+            <PageButtons
+              handleOffsetChange={handleOffsetChange}
+              limit={limit}
+              offset={offset}
+              totalPages={totalPages}
+            />
+          </div>
+        </> : <div className='info'>
+          Sorry, No comic found. Please try with different filters.
+        </div>}
       </div>
     </div>
   );
